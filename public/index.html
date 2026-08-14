@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Jarvis SOC v4.0 — Ali's autonomous Security Operations Center. Groq LPU inference. Real-time threat monitoring. n8n workflow automation.">
+  <title>Jarvis SOC — Mission Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/index.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+
+  <!-- ============ OVERLAY: Passphrase Setup ============ -->
+  <div id="setupOverlay" class="overlay hidden">
+    <div class="overlay-card">
+      <div class="overlay-logo">J</div>
+      <h2>Initialize Jarvis SOC</h2>
+      <p>Set a master passphrase to secure the encryption vault.<br>This is never stored — only a derived verification hash.</p>
+      <input type="password" id="setupPassphrase" placeholder="Master passphrase (8+ chars)" autocomplete="off">
+      <input type="password" id="setupPassphraseConfirm" placeholder="Confirm passphrase" autocomplete="off">
+      <button class="btn btn-confirm" id="setupBtn" onclick="app.initializePassphrase()">Initialize Vault</button>
+      <button class="btn btn-cancel" id="setupSkipBtn" onclick="app.skipSetup()" style="margin-top: 8px;">Skip for now</button>
+      <p class="overlay-note">AES-256-GCM · Argon2id key derivation</p>
+    </div>
+  </div>
+
+  <!-- ============ OVERLAY: Unlock Vault ============ -->
+  <div id="unlockOverlay" class="overlay hidden">
+    <div class="overlay-card">
+      <div class="overlay-logo">J</div>
+      <h2>Welcome back, Boss</h2>
+      <p>Enter your master passphrase to unlock the vault.</p>
+      <input type="password" id="unlockPassphrase" placeholder="Master passphrase" autocomplete="off">
+      <button class="btn btn-confirm" onclick="app.unlockVault()">Unlock</button>
+      <button class="btn btn-cancel" onclick="app.skipSetup()" style="margin-top: 8px;">Skip — read-only mode</button>
+    </div>
+  </div>
+
+  <!-- ============ TIER 2 CONFIRMATION MODAL ============ -->
+  <div id="tier2Modal" class="modal hidden">
+    <div class="modal-card tier2-card">
+      <div class="modal-header tier2-header">
+        <span class="modal-icon">⚠</span>
+        TIER 2 CONFIRMATION REQUIRED
+      </div>
+      <p class="modal-desc" id="tier2Desc">This action requires confirmation.</p>
+      <p class="modal-reversible">This action is reversible.</p>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="app.cancelTier2()">CANCEL</button>
+        <button class="btn btn-tier2" onclick="app.confirmTier2()">CONFIRM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TIER 3 CONFIRMATION MODAL ============ -->
+  <div id="tier3Modal" class="modal hidden">
+    <div class="modal-card tier3-card">
+      <div class="modal-header tier3-header">
+        <span class="modal-icon">🔴</span>
+        TIER 3 — DOUBLE CONFIRMATION + PASSPHRASE
+      </div>
+      <p class="modal-desc" id="tier3Desc">This action requires double confirmation and passphrase.</p>
+      <p class="modal-irreversible">⚠ This action is IRREVERSIBLE.</p>
+      <div id="tier3FirstStep">
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="app.cancelTier3()">CANCEL</button>
+          <button class="btn btn-tier3" onclick="app.firstConfirmTier3()">I UNDERSTAND — CONFIRM</button>
+        </div>
+      </div>
+      <div id="tier3SecondStep" class="hidden">
+        <input type="password" id="tier3Passphrase" class="tier3-pass-input" placeholder="Enter master passphrase to execute">
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="app.cancelTier3()">CANCEL</button>
+          <button class="btn btn-tier3-final" onclick="app.confirmTier3()">EXECUTE — FINAL CONFIRMATION</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CANARY BANNER ============ -->
+  <div id="canaryBanner" class="canary-banner hidden">
+    <span class="canary-icon">⚠</span>
+    CANARY TRIGGERED — <span id="canaryPath">unknown path</span>
+    <button onclick="document.getElementById('canaryBanner').classList.add('hidden')">✕</button>
+  </div>
+
+  <!-- ============ MAIN APP ============ -->
+  <div id="app">
+
+    <!-- ============ TOP BAR ============ -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="wordmark">
+          <span class="pulse-dot" id="statusDot"></span>
+          <span class="wordmark-text">JARVIS</span>
+          <span class="wordmark-version">SOC v4.0</span>
+        </div>
+      </div>
+
+      <div class="topbar-center">
+        <div class="status-pills">
+          <div class="pill" id="pillGroq">
+            <span class="pill-dot"></span>
+            <span class="pill-text">GROQ</span>
+          </div>
+          <div class="pill" id="pillTts">
+            <span class="pill-dot"></span>
+            <span class="pill-text">TTS</span>
+          </div>
+          <div class="pill" id="pillMonitor">
+            <span class="pill-dot"></span>
+            <span class="pill-text">MONITORING</span>
+          </div>
+          <div class="pill" id="pillDb">
+            <span class="pill-dot"></span>
+            <span class="pill-text">DB ONLINE</span>
+          </div>
+          <div class="pill" id="pillNtfy">
+            <span class="pill-dot"></span>
+            <span class="pill-text">NTFY</span>
+          </div>
+          <div class="pill" id="pillN8n">
+            <span class="pill-dot"></span>
+            <span class="pill-text">N8N</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="clock-block">
+          <div class="clock-time" id="headerTime">00:00:00</div>
+          <div class="clock-session">Session: <span id="sessionTimer">00:00:00</span></div>
+        </div>
+        <div id="greeting" class="topbar-greeting"></div>
+      </div>
+    </header>
+
+    <!-- ============ MAIN LAYOUT ============ -->
+    <div class="main-layout">
+
+      <!-- ============ LEFT SIDEBAR ============ -->
+      <aside class="sidebar-left">
+
+        <!-- Threat Level -->
+        <div class="threat-block">
+          <div class="threat-label">THREAT LEVEL</div>
+          <div class="threat-gauge-wrap">
+            <div class="threat-thermo">
+              <div class="thermo-fill" id="thermoFill"></div>
+            </div>
+            <div class="threat-score-big" id="thermoScore">0</div>
+          </div>
+          <div class="threat-sub">CVSS-based scoring</div>
+          <!-- Risk gauge (hidden, used by app.js) -->
+          <div id="riskGaugeWrap" style="display:none">
+            <canvas id="riskGauge" width="160" height="100"></canvas>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+          <div class="nav-section-label">NAVIGATION</div>
+          <a class="nav-item active" data-section="overview" onclick="app.setSection('overview')">
+            <span class="nav-icon">⬡</span>
+            <span class="nav-label">OVERVIEW</span>
+          </a>
+          <a class="nav-item" data-section="logs" onclick="app.setSection('logs')">
+            <span class="nav-icon">◈</span>
+            <span class="nav-label">LOG ANALYSIS</span>
+          </a>
+          <a class="nav-item" data-section="alerts" onclick="app.setSection('alerts')">
+            <span class="nav-icon">◉</span>
+            <span class="nav-label">ALERT QUEUE</span>
+            <span class="nav-badge" id="alertNavBadge">0</span>
+          </a>
+          <a class="nav-item" data-section="intel" onclick="app.setSection('intel')">
+            <span class="nav-icon">◎</span>
+            <span class="nav-label">THREAT INTEL</span>
+          </a>
+          <a class="nav-item" data-section="mitre" onclick="app.setSection('mitre')">
+            <span class="nav-icon">⬟</span>
+            <span class="nav-label">MITRE ATT&amp;CK</span>
+          </a>
+          <a class="nav-item" data-section="playbooks" onclick="app.setSection('playbooks')">
+            <span class="nav-icon">◈</span>
+            <span class="nav-label">PLAYBOOKS</span>
+          </a>
+          <a class="nav-item" data-section="code" onclick="app.setSection('code')">
+            <span class="nav-icon">◉</span>
+            <span class="nav-label">CODE SECURITY</span>
+          </a>
+          <a class="nav-item" data-section="files" onclick="app.setSection('files')">
+            <span class="nav-icon">◎</span>
+            <span class="nav-label">FILE SECURITY</span>
+          </a>
+          <a class="nav-item" data-section="network" onclick="app.setSection('network')">
+            <span class="nav-icon">⬡</span>
+            <span class="nav-label">NETWORK</span>
+          </a>
+          <a class="nav-item" data-section="privacy" onclick="app.setSection('privacy')">
+            <span class="nav-icon">◈</span>
+            <span class="nav-label">PRIVACY</span>
+          </a>
+          <a class="nav-item" data-section="reports" onclick="app.setSection('reports')">
+            <span class="nav-icon">⬟</span>
+            <span class="nav-label">REPORTS</span>
+          </a>
+          <a class="nav-item" data-section="n8n" onclick="app.setSection('n8n')">
+            <span class="nav-icon">⬡</span>
+            <span class="nav-label">N8N WORKFLOWS</span>
+            <span class="nav-badge n8n-badge" id="n8nNavBadge">0</span>
+          </a>
+        </nav>
+
+        <!-- Tool Category Filter (compatibility with existing JS) -->
+        <div id="toolCategories" style="display:none">
+          <button data-category="all" id="badgeAll">0</button>
+          <button data-category="code" id="badgeCode">0</button>
+          <button data-category="files" id="badgeFiles">0</button>
+          <button data-category="network" id="badgeNetwork">0</button>
+          <button data-category="privacy" id="badgePrivacy">0</button>
+          <button data-category="defense" id="badgeDefense">0</button>
+          <button data-category="soc" id="badgeSoc">0</button>
+        </div>
+
+        <!-- Watcher Status -->
+        <div class="watcher-block">
+          <div class="watcher-label">BACKGROUND WATCHERS</div>
+          <div class="watcher-row" id="watcherLogs">
+            <span class="watcher-name">LOG WATCHER</span>
+            <span class="watcher-status"><span class="watcher-dot"></span><span class="watcher-state">CHECKING</span></span>
+            <span class="watcher-timer">-</span>
+          </div>
+          <div class="watcher-row" id="watcherCanary">
+            <span class="watcher-name">CANARY WATCHER</span>
+            <span class="watcher-status"><span class="watcher-dot"></span><span class="watcher-state">CHECKING</span></span>
+            <span class="watcher-timer">-</span>
+          </div>
+          <div class="watcher-row" id="watcherNetwork">
+            <span class="watcher-name">NETWORK WATCHER</span>
+            <span class="watcher-status"><span class="watcher-dot"></span><span class="watcher-state">CHECKING</span></span>
+            <span class="watcher-timer">-</span>
+          </div>
+          <div class="watcher-row" id="watcherProcess">
+            <span class="watcher-name">PROCESS WATCHER</span>
+            <span class="watcher-status"><span class="watcher-dot"></span><span class="watcher-state">CHECKING</span></span>
+            <span class="watcher-timer">-</span>
+          </div>
+          <div class="watcher-row" id="watcherDrop">
+            <span class="watcher-name">WATCH-DROP</span>
+            <span class="watcher-status"><span class="watcher-dot"></span><span class="watcher-state">CHECKING</span></span>
+            <span class="watcher-timer">-</span>
+          </div>
+        </div>
+
+        <!-- Status indicators (compat IDs) -->
+        <div id="statusIndicator" style="display:none">
+          <div id="statusText">Online</div>
+        </div>
+        <div style="display:none">
+          <span id="groqStatus">-</span>
+          <span id="vaultStatus">-</span>
+        </div>
+      </aside>
+
+      <!-- ============ MAIN CONTENT ============ -->
+      <main class="main-content">
+
+        <!-- ============ DEFAULT OVERVIEW VIEW ============ -->
+        <div id="view-overview" class="view-pane" style="display:flex; flex-direction:column; gap:12px; height:100%;">
+          <!-- SOC Metrics Strip -->
+          <div class="metrics-strip" id="socMetricsBar">
+            <div class="metric-card" id="metricOpenAlerts">
+              <div class="metric-val" id="metricOpenAlertsVal">0</div>
+              <div class="metric-lbl">OPEN ALERTS</div>
+            </div>
+            <div class="metric-card" id="metricResolvedToday">
+              <div class="metric-val" id="metricResolvedTodayVal">0</div>
+              <div class="metric-lbl">RESOLVED TODAY</div>
+            </div>
+            <div class="metric-card" id="metricMitre">
+              <div class="metric-val" id="metricMitreVal">0</div>
+              <div class="metric-lbl">MITRE TECHNIQUES</div>
+            </div>
+            <div class="metric-card" id="metricAnomalies">
+              <div class="metric-val" id="metricAnomaliesVal">0</div>
+              <div class="metric-lbl">ANOMALIES</div>
+            </div>
+            <div class="metric-card metric-risk" id="metricRisk">
+              <div class="metric-val" id="metricRiskVal">0</div>
+              <div class="metric-lbl">RISK SCORE</div>
+            </div>
+          </div>
+
+          <!-- Command Terminal -->
+          <div class="terminal-panel">
+            <div class="terminal-header">
+              <div class="terminal-title">
+                <span class="terminal-title-dot"></span>
+                COMMAND TERMINAL
+              </div>
+              <div class="terminal-right-label">JARVIS v4.0</div>
+            </div>
+
+            <!-- Output -->
+            <div class="terminal-output" id="terminalOutput">
+              <!-- lines added by terminal.js -->
+            </div>
+
+            <!-- Voice Waveform -->
+            <div class="voice-waveform" id="voiceWaveform">
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+              <div class="wave-bar"></div><div class="wave-bar"></div>
+            </div>
+
+            <!-- Input Row -->
+            <div class="terminal-input-row">
+              <button class="voice-btn" id="voiceBtn" title="Voice input (Space)">🎤</button>
+              <input type="text" class="terminal-input" id="commandInput"
+                placeholder="Enter command or speak 'Hey Jarvis...'"
+                autocomplete="off" spellcheck="false">
+              <span class="enter-hint" id="enterHint">ENTER ↵</span>
+            </div>
+          </div>
+
+          <!-- Bottom Panels -->
+          <div class="bottom-panels">
+
+            <!-- Alert Queue -->
+            <div class="bottom-panel alerts-panel">
+              <div class="panel-header">
+                <span class="panel-dot blink" id="alertDot"></span>
+                ALERT QUEUE
+                <span class="panel-count" id="alertQueueCount">0</span>
+              </div>
+              <div class="alert-list" id="alertQueueList">
+                <div class="empty-state">No active alerts</div>
+              </div>
+            </div>
+
+            <!-- Findings Feed -->
+            <div class="bottom-panel findings-panel">
+              <div class="panel-header">
+                <span class="panel-dot blink" id="findingDot"></span>
+                FINDINGS FEED
+              </div>
+              <div class="findings-list" id="findingsList">
+                <div class="empty-state">No findings yet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ DYNAMIC SECTION VIEWS ============ -->
+        <div id="view-dynamic" class="view-pane" style="display:none; height:100%; overflow-y:auto; padding:4px;">
+          <!-- Populated by views.js -->
+        </div>
+
+      </main>
+
+      <!-- ============ RIGHT SIDEBAR ============ -->
+      <aside class="sidebar-right">
+
+        <!-- Threat Intel Panel -->
+        <div class="right-panel">
+          <div class="right-panel-title">THREAT INTEL</div>
+          <div id="threatIntelList" class="intel-list">
+            <div class="empty-state-sm">No enrichments yet</div>
+          </div>
+        </div>
+
+        <!-- MITRE ATT&CK Heatmap -->
+        <div class="right-panel">
+          <div class="right-panel-title">MITRE ATT&amp;CK</div>
+          <div class="mitre-heatmap" id="mitreHeatmap">
+            <!-- Filled by soc-panels.js -->
+          </div>
+        </div>
+
+        <!-- Notification Status -->
+        <div class="right-panel">
+          <div class="right-panel-title">NOTIFICATIONS</div>
+          <div class="notif-grid">
+            <div class="notif-item" id="notifEmail">
+              <span class="notif-dot"></span>
+              <span>EMAIL</span>
+            </div>
+            <div class="notif-item" id="notifSlack">
+              <span class="notif-dot"></span>
+              <span>SLACK</span>
+            </div>
+            <div class="notif-item" id="notifNtfy">
+              <span class="notif-dot"></span>
+              <span>NTFY ● LIVE</span>
+            </div>
+            <div class="notif-item" id="notifDesktop">
+              <span class="notif-dot"></span>
+              <span>DESKTOP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- N8N Workflow Status -->
+        <div class="right-panel n8n-panel" id="n8nPanel">
+          <div class="right-panel-title n8n-title">
+            N8N WORKFLOWS
+            <a href="http://localhost:5678" target="_blank" class="n8n-open-btn">Open n8n ↗</a>
+          </div>
+          <div class="n8n-status-row">
+            <span class="n8n-conn-dot" id="n8nConnDot"></span>
+            <span id="n8nConnLabel">CHECKING...</span>
+          </div>
+          <div class="n8n-triggers-label">RECENT TRIGGERS</div>
+          <div class="n8n-trigger-list" id="n8nTriggerList">
+            <div class="empty-state-sm">No triggers yet</div>
+          </div>
+          <div class="n8n-count-row">
+            Triggered this session: <span id="n8nTriggeredCount" class="n8n-count">0</span>
+          </div>
+        </div>
+
+        <!-- Session History -->
+        <div class="right-panel">
+          <div class="right-panel-title">SESSION HISTORY</div>
+          <div id="sessionHistoryList" class="session-list">
+            <div class="empty-state-sm">Loading...</div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div><!-- /.main-layout -->
+  </div><!-- /#app -->
+
+  <!-- Scripts -->
+  <script src="/js/terminal.js"></script>
+  <script src="/js/panels.js"></script>
+  <script src="/js/soc-panels.js"></script>
+  <script src="/js/views.js"></script>
+  <script src="/js/voice.js"></script>
+  <script src="/js/app.js"></script>
+
+</body>
+</html>
+

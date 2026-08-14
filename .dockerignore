@@ -1,0 +1,12 @@
+node_modules
+data/jarvis.db
+data/alerts.json
+data/action-log.json
+.env
+demo_jarvis_soc.mp4
+*.log
+.git
+.gemini
+scripts/
+test-*.js
+docs/

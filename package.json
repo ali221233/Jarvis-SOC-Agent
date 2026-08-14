@@ -1,0 +1,42 @@
+{
+  "name": "jarvis-soc-agent",
+  "version": "2.0.0",
+  "description": "Jarvis SOC Agent — Ali's autonomous Security Operations Center assistant. Groq LPU inference. Real-time threat monitoring.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "demo": "node scripts/seed-demo-data.js && node scripts/record-demo.js",
+    "seed": "node scripts/seed-demo-data.js",
+    "test": "node test-soc.js"
+  },
+  "keywords": [
+    "cybersecurity",
+    "soc",
+    "groq",
+    "security-scanner",
+    "threat-intelligence",
+    "mitre-attack"
+  ],
+  "author": "Ali",
+  "license": "MIT",
+  "dependencies": {
+    "argon2": "^0.41.1",
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "kokoro-js": "^1.2.1",
+    "node-cron": "^4.6.0",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^9.0.4",
+    "pdfkit": "^0.19.1",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "puppeteer": "^24.43.1",
+    "puppeteer-screen-recorder": "^3.0.6"
+  }
+}
