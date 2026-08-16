@@ -66,7 +66,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.SLACK_WEBHOOK_URL || ('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
+        "url": "={{('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
         "method": "POST",
         "sendBody": true,
         "specifyBody": "json",
