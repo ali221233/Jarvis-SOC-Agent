@@ -10,7 +10,10 @@
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300]
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
@@ -27,7 +30,10 @@
       "name": "Is CRITICAL?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [480, 300]
+      "position": [
+        480,
+        300
+      ]
     },
     {
       "parameters": {
@@ -35,9 +41,18 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Title", "value": "JARVIS CRITICAL ALERT" },
-            { "name": "Priority", "value": "5" },
-            { "name": "Tags", "value": "rotating_light,skull" }
+            {
+              "name": "Title",
+              "value": "JARVIS CRITICAL ALERT"
+            },
+            {
+              "name": "Priority",
+              "value": "5"
+            },
+            {
+              "name": "Tags",
+              "value": "rotating_light,skull"
+            }
           ]
         },
         "method": "POST",
@@ -55,11 +70,14 @@
       "name": "Send NTFY Push",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [720, 200]
+      "position": [
+        720,
+        200
+      ]
     },
     {
       "parameters": {
-        "url": "={{$env.SLACK_WEBHOOK_URL || ('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
+        "url": "={{('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
         "method": "POST",
         "sendBody": true,
         "specifyBody": "json",
@@ -69,7 +87,10 @@
       "name": "Slack Notification",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [720, 380]
+      "position": [
+        720,
+        380
+      ]
     },
     {
       "parameters": {
@@ -79,22 +100,77 @@
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [960, 300]
+      "position": [
+        960,
+        300
+      ]
     }
   ],
   "connections": {
-    "Webhook Trigger": { "main": [[{ "node": "Is CRITICAL?", "type": "main", "index": 0 }]] },
-    "Is CRITICAL?": {
+    "Webhook Trigger": {
       "main": [
-        [{ "node": "Send NTFY Push", "type": "main", "index": 0 }, { "node": "Slack Notification", "type": "main", "index": 0 }],
-        [{ "node": "Respond OK", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Is CRITICAL?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Send NTFY Push": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
-    "Slack Notification": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+    "Is CRITICAL?": {
+      "main": [
+        [
+          {
+            "node": "Send NTFY Push",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send NTFY Push": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notification": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-
   "active": true,
-  "settings": { "executionTimeout": 30 },
-  "tags": ["jarvis", "soc", "alerts"]
+  "settings": {
+    "executionTimeout": 30
+  },
+  "tags": [
+    "jarvis",
+    "soc",
+    "alerts"
+  ]
 }
