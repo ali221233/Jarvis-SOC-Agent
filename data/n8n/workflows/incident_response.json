@@ -14,6 +14,36 @@
     },
     {
       "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Jarvis SOC Incident Log"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "name",
+          "value": "Incidents"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Incident ID": "={{$json.body.incidentId || 'INC-' + $now.toMillis()}}",
+            "Playbook Name": "={{$json.body.playbookName}}",
+            "Steps Completed": "={{$json.body.stepsCompleted}}",
+            "Status": "={{$json.body.status || 'CONTAINED'}}",
+            "Timestamp": "={{$json.body.timestamp || $now.toISO()}}"
+          }
+        },
+        "options": {}
+      },
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [500, 160]
+    },
+    {
+      "parameters": {
         "url": "https://ntfy.sh/jarvis-ali-G195hqv1111",
         "sendHeaders": true,
         "headerParameters": {
@@ -38,7 +68,7 @@
       "name": "Send NTFY Incident Log",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [500, 200]
+      "position": [500, 320]
     },
     {
       "parameters": {
@@ -52,7 +82,7 @@
       "name": "Send Slack Incident Log",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
-      "position": [500, 400]
+      "position": [500, 480]
     },
     {
       "parameters": {
@@ -62,15 +92,23 @@
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [760, 300]
+      "position": [780, 300]
     }
   ],
   "connections": {
     "Webhook Trigger": {
       "main": [
         [
+          { "node": "Log to Google Sheets", "type": "main", "index": 0 },
           { "node": "Send NTFY Incident Log", "type": "main", "index": 0 },
           { "node": "Send Slack Incident Log", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
         ]
       ]
     },
