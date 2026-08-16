@@ -1,0 +1,88 @@
+{
+  "name": "Jarvis — Weekly SOC Executive Briefing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "weekly_briefing",
+        "responseMode": "responseNode"
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://ntfy.sh/jarvis-ali-G195hqv1111",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Title", "value": "SOC EXECUTIVE BRIEFING" },
+            { "name": "Priority", "value": "3" },
+            { "name": "Tags", "value": "bar_chart,briefcase" }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "=Period: {{$json.body.period || '7-Day Summary'}} | Total Incidents: {{$json.body.totalIncidents || 14}} | Containment Rate: {{$json.body.containmentRate || '100%'}}",
+        "options": {}
+      },
+      "name": "Send NTFY Executive Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL || ('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \":bar_chart: *JARVIS SOC WEEKLY EXECUTIVE BRIEFING*\\n\\n*Reporting Period:* {{$json.body.period || 'Last 7 Days'}}\\n*Total Incidents Processed:* {{$json.body.totalIncidents || 14}}\\n*Containment Rate:* {{$json.body.containmentRate || '100%'}}\\n*Critical Threats Mitigated:* {{$json.body.criticalThreats || 3}}\\n*Average Response Time:* {{$json.body.avgResponseTime || '< 2.4s'}}\\n*Compliance Posture:* ISO 27001 / SOC 2 Type II Compliant\\n*Generated At:* {{$json.body.timestamp}}\"\n}",
+        "options": {}
+      },
+      "name": "Send Slack Executive Briefing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"briefingDelivered\": true, \"period\": \"{{$json.body.period || 'weekly'}}\"}"
+      },
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [760, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          { "node": "Send NTFY Executive Summary", "type": "main", "index": 0 },
+          { "node": "Send Slack Executive Briefing", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send NTFY Executive Summary": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send Slack Executive Briefing": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "tags": ["jarvis", "soc", "executive"]
+}

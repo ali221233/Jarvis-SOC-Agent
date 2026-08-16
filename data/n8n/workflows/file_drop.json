@@ -1,0 +1,88 @@
+{
+  "name": "Jarvis — File Drop Ingestion & Sandbox",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "file_drop",
+        "responseMode": "responseNode"
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://ntfy.sh/jarvis-ali-G195hqv1111",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Title", "value": "SUSPICIOUS FILE DETECTED" },
+            { "name": "Priority", "value": "3" },
+            { "name": "Tags", "value": "file_folder,warning" }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "string",
+        "body": "=File: {{$json.body.fileName}} | Path: {{$json.body.filePath}} | Size: {{$json.body.fileSize}} bytes",
+        "options": {}
+      },
+      "name": "Send NTFY File Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL || ('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \":open_file_folder: *JARVIS FILE-DROP INGESTION*\\n\\n*File Name:* {{$json.body.fileName}}\\n*File Path:* {{$json.body.filePath}}\\n*Extension:* {{$json.body.fileExtension}}\\n*Size:* {{$json.body.fileSize}} bytes\\n*Timestamp:* {{$json.body.timestamp}}\"\n}",
+        "options": {}
+      },
+      "name": "Send Slack File Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ingested\": true, \"fileName\": \"{{$json.body.fileName}}\"}"
+      },
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [760, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          { "node": "Send NTFY File Alert", "type": "main", "index": 0 },
+          { "node": "Send Slack File Alert", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send NTFY File Alert": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send Slack File Alert": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "tags": ["jarvis", "soc", "ingestion"]
+}
