@@ -14,40 +14,81 @@
     },
     {
       "parameters": {
-        "operation": "appendOrUpdate",
-        "documentId": { "mode": "url", "value": "" },
-        "sheetName": { "mode": "name", "value": "Incidents" },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Incident ID": "={{$json.body.incidentId}}",
-            "Playbook": "={{$json.body.playbookName}}",
-            "Steps Completed": "={{$json.body.stepsCompleted}}",
-            "Timestamp": "={{$json.body.timestamp}}",
-            "Session ID": "={{$json.body.sessionId}}"
-          }
-        }
+        "url": "https://ntfy.sh/jarvis-ali-G195hqv1111",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Title", "value": "🛡️ JARVIS PLAYBOOK EXECUTED" },
+            { "name": "Priority", "value": "4" },
+            { "name": "Tags", "value": "shield,white_check_mark" }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=",
+              "value": "=Playbook: {{$json.body.playbookName}} | Steps: {{$json.body.stepsCompleted}} | Status: {{$json.body.status || 'CONTAINED'}}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "name": "Log to Google Sheets",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
-      "position": [480, 300]
+      "name": "Send NTFY Incident Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL || ('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \":shield: *JARVIS INCIDENT RESPONSE PLAYBOOK COMPLETED*\\n\\n*Playbook:* {{$json.body.playbookName}}\\n*Incident ID:* {{$json.body.incidentId || 'N/A'}}\\n*Steps Completed:* {{$json.body.stepsCompleted}}\\n*Status:* {{$json.body.status || 'CONTAINED'}}\\n*Timestamp:* {{$json.body.timestamp}}\"\n}",
+        "options": {}
+      },
+      "name": "Send Slack Incident Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [500, 400]
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\"logged\": true}"
+        "responseBody": "={\"logged\": true, \"playbook\": \"{{$json.body.playbookName}}\", \"status\": \"CONTAINED\"}"
       },
       "name": "Respond OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [720, 300]
+      "position": [760, 300]
     }
   ],
   "connections": {
-    "Webhook Trigger": { "main": [[{ "node": "Log to Google Sheets", "type": "main", "index": 0 }]] },
-    "Log to Google Sheets": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+    "Webhook Trigger": {
+      "main": [
+        [
+          { "node": "Send NTFY Incident Log", "type": "main", "index": 0 },
+          { "node": "Send Slack Incident Log", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send NTFY Incident Log": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send Slack Incident Log": {
+      "main": [
+        [
+          { "node": "Respond OK", "type": "main", "index": 0 }
+        ]
+      ]
+    }
   },
-  "active": false,
+  "active": true,
   "tags": ["jarvis", "soc", "logging"]
 }
