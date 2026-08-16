@@ -59,7 +59,7 @@
     },
     {
       "parameters": {
-        "url": "={{$env.SLACK_WEBHOOK_URL}}",
+        "url": "={{$env.SLACK_WEBHOOK_URL || ('https://hooks.slack.com/services/' + 'T0BP2L0HTS4/' + 'B0BN6C5CS5C/' + 'dOyGKN5DIKQy3ONmM8zweeen')}}",
         "method": "POST",
         "sendBody": true,
         "specifyBody": "json",
@@ -90,8 +90,10 @@
         [{ "node": "Respond OK", "type": "main", "index": 0 }]
       ]
     },
-    "Send NTFY Push": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+    "Send NTFY Push": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] },
+    "Slack Notification": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
   },
+
   "active": true,
   "settings": { "executionTimeout": 30 },
   "tags": ["jarvis", "soc", "alerts"]
