@@ -24,7 +24,8 @@ function setSessionId(id) {
 async function triggerWorkflow(workflowName, payload = {}) {
   if (!N8N_ENABLED) return { skipped: true, reason: 'n8n disabled' };
   
-  const url = `${N8N_WEBHOOK_BASE}/${workflowName}`;
+  const prodUrl = `${N8N_WEBHOOK_BASE}/${workflowName}`;
+  const testUrl = N8N_WEBHOOK_BASE.replace(/\/webhook$/, '/webhook-test') + `/${workflowName}`;
   const body = {
     source: 'jarvis',
     timestamp: new Date().toISOString(),
@@ -33,13 +34,32 @@ async function triggerWorkflow(workflowName, payload = {}) {
   };
   
   try {
-    const res = await fetch(url, {
+    // 1. Try production webhook
+    let res = await fetch(prodUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
       timeout: 5000,
     });
     
+    let activeUrl = prodUrl;
+
+    // 2. If 404, try test webhook URL in case workflow is being tested in n8n UI
+    if (res.status === 404) {
+      try {
+        const testRes = await fetch(testUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          timeout: 2000,
+        });
+        if (testRes.status !== 404) {
+          res = testRes;
+          activeUrl = testUrl;
+        }
+      } catch {}
+    }
+
     const status = res.status;
     workflowsTriggered++;
     
@@ -53,7 +73,13 @@ async function triggerWorkflow(workflowName, payload = {}) {
     if (recentTriggers.length > 10) recentTriggers.pop();
     
     console.log(`  [n8n] Triggered: ${workflowName} → HTTP ${status}`);
-    return { triggered: true, status, workflowName };
+    return {
+      triggered: status >= 200 && status < 300,
+      status,
+      workflowName,
+      url: activeUrl,
+      hint: status === 404 ? `Workflow not yet activated in n8n. Open http://localhost:5678, import data/n8n/workflows/${workflowName}.json, and toggle 'Active' to ON.` : undefined,
+    };
   } catch (err) {
     const triggerRecord = {
       workflowName,
@@ -66,9 +92,10 @@ async function triggerWorkflow(workflowName, payload = {}) {
     
     // Silent failure — never crash Jarvis
     console.log(`  [n8n] Trigger failed (${workflowName}): ${err.message}`);
-    return { triggered: false, error: err.message };
+    return { triggered: false, error: err.message, url: prodUrl };
   }
 }
+
 
 /**
  * Check if n8n is reachable.

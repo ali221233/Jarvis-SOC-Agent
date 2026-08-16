@@ -948,6 +948,7 @@ const views = {
           <div style="color:var(--accent-primary); font-weight:600; margin-bottom:6px;">⚡ Webhook Dispatched: <code>${escapeHtml(data.workflowName || workflowName)}</code></div>
           <div style="font-size:12px; margin-bottom:4px;">Endpoint: <code>${escapeHtml(data.url || 'http://localhost:5678/webhook/' + workflowName)}</code></div>
           <div style="font-size:12px; margin-bottom:6px;">Status: <span class="status-tag ${isSuccess ? 'status-active' : 'status-failed'}">${typeof statusVal === 'number' ? 'HTTP ' + statusVal : escapeHtml(String(statusVal))}</span></div>
+          ${data.hint ? `<div style="font-size:11px; color:#f59e0b; margin-bottom:6px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); padding:6px 8px; border-radius:4px;">💡 <strong>Note:</strong> ${escapeHtml(data.hint)}</div>` : ''}
           <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px;">Payload Sent:</div>
           <pre class="results-pre" style="max-height:180px; overflow:auto;">${escapeHtml(JSON.stringify(data.payload || {}, null, 2))}</pre>
         `;
