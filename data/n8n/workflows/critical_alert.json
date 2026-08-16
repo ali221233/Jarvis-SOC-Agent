@@ -59,21 +59,14 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
-        "select": "channel",
-        "channelId": {
-          "__rl": true,
-          "value": "#soc-alerts",
-          "mode": "name"
-        },
-        "messageType": "text",
         "text": "=:rotating_light: *JARVIS CRITICAL ALERT*\n\n*Incident:* {{$json.body.incidentId}}\n*Title:* {{$json.body.title}}\n*Severity:* {{$json.body.severity}}\n*Source:* {{$json.body.source}}\n*MITRE:* {{$json.body.mitreTech || 'Unknown'}}\n*CVSS:* {{$json.body.cvssScore || 'N/A'}}\n*Time:* {{$json.body.timestamp}}",
-        "otherOptions": {}
+        "authentication": "webhook",
+        "webhookUri": "{{$env.SLACK_WEBHOOK_URL}}",
+        "options": {}
       },
       "name": "Slack Notification",
       "type": "n8n-nodes-base.slack",
-      "typeVersion": 2.1,
+      "typeVersion": 2,
       "position": [720, 380]
     },
     {
