@@ -1,0 +1,23 @@
+From: "IT Support Desk" <security-update@account-security-alert.ru>
+Reply-To: security-verify@suspicious-auth-portal.net
+To: boss@organization.com
+Subject: URGENT: Your Security Certificate Has Expired - Verify Within 24 Hours
+Date: Fri, 14 Aug 2026 14:30:00 +0000
+Message-ID: <20260814143000.83921.security@account-security-alert.ru>
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Authentication-Results: mx.google.com; spf=fail (domain of account-security-alert.ru does not designate 185.220.101.42 as permitted sender) smtp.mailfrom=security-update@account-security-alert.ru; dkim=fail header.i=@account-security-alert.ru
+Received: from mail.account-security-alert.ru (185.220.101.42) by mx.organization.com with SMTP
+
+Dear User,
+
+We detected unauthorized access to your account from an unrecognized IP address (185.220.101.42). 
+Your corporate access and password will be suspended immediately within 24 hours unless you verify your identity.
+
+Please act now and confirm your login credentials at the secure verification portal below:
+https://bit.ly/3xSecVerify?user=boss&redirect=http://185.220.101.42/auth/login.php
+
+Failure to verify will result in permanent account deactivation.
+
+IT Security Operations Center
+Internal Support Team

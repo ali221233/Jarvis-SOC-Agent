@@ -1,0 +1,16 @@
+TimeCreated: 2024-01-15T02:10:00Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:15Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:30Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:45Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:60Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:75Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:90Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:105Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:120Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:135Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:150Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:10:165Z | EventID: 4625 | Source: Security | Failed logon attempt for user administrator from 192.168.1.100
+TimeCreated: 2024-01-15T02:14:00Z | EventID: 4720 | Source: Security | New user account created: svc_update by SYSTEM
+TimeCreated: 2024-01-15T02:14:30Z | EventID: 4732 | Source: Security | User svc_update added to Administrators group
+TimeCreated: 2024-01-15T02:16:00Z | EventID: 7045 | Source: System  | New service installed: WindowsUpdateSvc by svc_update
+TimeCreated: 2024-01-15T02:22:00Z | EventID: 1102 | Source: Security | Audit log was cleared by svc_update

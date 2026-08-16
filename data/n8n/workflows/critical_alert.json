@@ -1,0 +1,98 @@
+{
+  "name": "Jarvis — Critical Alert Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "critical_alert",
+        "responseMode": "responseNode"
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.body.severity}}",
+              "operation": "equal",
+              "value2": "CRITICAL"
+            }
+          ]
+        }
+      },
+      "name": "Is CRITICAL?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://ntfy.sh/{{$env.NTFY_TOPIC}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Title", "value": "JARVIS CRITICAL ALERT" },
+            { "name": "Priority", "value": "5" },
+            { "name": "Tags", "value": "rotating_light,skull" }
+          ]
+        },
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=",
+              "value": "=CRITICAL: {{$json.body.title}} | Incident: {{$json.body.incidentId}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Send NTFY Push",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [720, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SLACK_WEBHOOK_URL || 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'}}",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \":rotating_light: *JARVIS CRITICAL ALERT*\\n\\n*Incident:* {{$json.body.incidentId}}\\n*Title:* {{$json.body.title}}\\n*Severity:* {{$json.body.severity}}\\n*Source:* {{$json.body.source}}\\n*MITRE:* {{$json.body.mitreTech || 'Unknown'}}\\n*CVSS:* {{$json.body.cvssScore || 'N/A'}}\\n*Time:* {{$json.body.timestamp}}\"\n}",
+        "options": {}
+      },
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [720, 380]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"received\": true, \"incidentId\": \"{{$json.body.incidentId}}\"}"
+      },
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [960, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Is CRITICAL?", "type": "main", "index": 0 }]] },
+    "Is CRITICAL?": {
+      "main": [
+        [{ "node": "Send NTFY Push", "type": "main", "index": 0 }, { "node": "Slack Notification", "type": "main", "index": 0 }],
+        [{ "node": "Respond OK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send NTFY Push": { "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionTimeout": 30 },
+  "tags": ["jarvis", "soc", "alerts"]
+}

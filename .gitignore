@@ -2,5 +2,12 @@ node_modules/
 .env
 *.log
 .jarvis/
-data/
 dist/
+data/*.db*
+data/*.json
+data/backups/
+!data/n8n/
+!data/n8n/**
+!data/demo-logs/
+!data/demo-logs/**
+
