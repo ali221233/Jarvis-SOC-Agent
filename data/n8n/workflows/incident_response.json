@@ -14,7 +14,7 @@
     },
     {
       "parameters": {
-        "operation": "appendOrUpdate",
+        "operation": "append",
         "documentId": {
           "__rl": true,
           "mode": "name",
@@ -48,21 +48,15 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Title", "value": "🛡️ JARVIS PLAYBOOK EXECUTED" },
+            { "name": "Title", "value": "JARVIS PLAYBOOK EXECUTED" },
             { "name": "Priority", "value": "4" },
             { "name": "Tags", "value": "shield,white_check_mark" }
           ]
         },
         "method": "POST",
         "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "=",
-              "value": "=Playbook: {{$json.body.playbookName}} | Steps: {{$json.body.stepsCompleted}} | Status: {{$json.body.status || 'CONTAINED'}}"
-            }
-          ]
-        },
+        "specifyBody": "string",
+        "body": "=Playbook: {{$json.body.playbookName}} | Steps: {{$json.body.stepsCompleted}} | Status: {{$json.body.status || 'CONTAINED'}}",
         "options": {}
       },
       "name": "Send NTFY Incident Log",
