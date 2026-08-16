@@ -17,6 +17,9 @@ const socAlerts = require('../tools/soc-alerts');
 const socMitre = require('../tools/soc-mitre');
 const socThreatIntel = require('../tools/soc-threat-intel');
 const cvssScorer = require('../cvss-scorer');
+const n8nClient = require('../n8n-client');
+const monitor = require('../monitor');
+
 
 // WebSocket broadcast function — set by server.js
 let wsBroadcast = () => {};
